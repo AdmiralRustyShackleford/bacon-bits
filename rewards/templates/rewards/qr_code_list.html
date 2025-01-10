@@ -1,0 +1,9 @@
+<h1>QR Codes</h1>
+<ul>
+    {% for qr in qr_codes %}
+        <li>
+            <p>{{ qr.content }}</p>
+            <img src="{{ qr.image.url }}" alt="QR Code for {{ qr.content }}">
+        </li>
+    {% endfor %}
+</ul>

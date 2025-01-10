@@ -1,3 +1,4 @@
+import qrcode
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -15,7 +16,32 @@ class QRCode(models.Model):
     unique_code = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    content = models.TextField(help_text="The data encoded in the QR code (e.g., URL or unique identifier).",
+                               default="default_content")
+    image = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        # Generate the QR code image before saving
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(self.content)
+        qr.make(fit=True)
+        
+        # Create an image from the QR code
+        img = qr.make_image(fill_color="black", back_color="white") # make it look like bacon later
+        
+        # Save the image to the ImageField
+        from io import BytesIO
+        from django.core.files.base import ContentFile
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        self.image.save(f"qr_code_{self.id}.png", ContentFile(buffer.getvalue()), save=False)
+        
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.unique_code
 
